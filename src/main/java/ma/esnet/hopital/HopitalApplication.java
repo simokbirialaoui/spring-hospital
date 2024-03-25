@@ -6,6 +6,7 @@ import ma.esnet.hopital.repository.MedecinRepository;
 import ma.esnet.hopital.repository.PatientRepository;
 import ma.esnet.hopital.repository.RendezVousRepository;
 import ma.esnet.hopital.service.IHospitalService;
+import ma.esnet.hopital.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -25,7 +26,7 @@ public class HopitalApplication {
     }
 
     @Bean
-    CommandLineRunner start(IHospitalService hospitalService, PatientRepository patientRepository, MedecinRepository medecinRepository, RendezVousRepository rendezVousRepository) {
+    CommandLineRunner start(IHospitalService hospitalService, PatientRepository patientRepository, MedecinRepository medecinRepository, RendezVousRepository rendezVousRepository, UserService userService) {
         return args -> {
             Stream.of("mohammed", "hanan", "mehdi").forEach(name -> {
                 Patient patient = new Patient();
@@ -43,25 +44,55 @@ public class HopitalApplication {
                 hospitalService.SaveMedecin(medecin);
 
             });
-
             Patient patient = patientRepository.findById(1L).orElse(null);
             Patient patient1 = patientRepository.findByNom("mohammed");
             Medecin medecin = medecinRepository.findByNom("jhon");
-
             RendezVous rendezVous = new RendezVous();
             rendezVous.setDate(new Date());
             rendezVous.setStatus(StatusRDV.PENDING);
             rendezVous.setPatient(patient);
             rendezVous.setMedecin(medecin);
             hospitalService.saveRendezVous(rendezVous);
-
             RendezVous rendezVous1 = rendezVousRepository.findAll().get(0);
             Consultation consultation = new Consultation();
-
             consultation.setDateConsultation(new Date());
             consultation.setRendezVous(rendezVous1);
             consultation.setRapport("Rapport de consultation ....");
             hospitalService.saveConsultation(consultation);
+
+            User user1 = new User();
+            user1.setUsername("ahmed");
+            user1.setPassword("123456");
+            userService.addNewUser(user1);
+            User user2 = new User();
+            user2.setUsername("khadija");
+            user2.setPassword("abcdef");
+            userService.addNewUser(user2);
+            User user3 = new User();
+            user3.setUsername("khawla");
+            user3.setPassword("aaazzz");
+            userService.addNewUser(user3);
+
+
+            Stream.of("STUDENT", "USER", "ADMIN").forEach(r -> {
+                Role role = new Role();
+                role.setRoleName(r);
+                userService.addNewRole(role);
+            });
+            userService.addRoleToUser("khadija", "STUDENT");
+            userService.addRoleToUser("khadija", "USER");
+            userService.addRoleToUser("khawla", "USER");
+            userService.addRoleToUser("ahmed", "ADMIN");
+            try {
+                User user = userService.authenticate("khadija", "abcdef");
+                System.out.println(user.getUserId());
+                System.out.println(user.getUsername());
+                System.out.println("ROLES=>");
+                user.getRoles().forEach(r -> System.out.println("role=>" + r));
+
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
 
 
         };
